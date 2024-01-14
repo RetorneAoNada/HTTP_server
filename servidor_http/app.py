@@ -1,8 +1,11 @@
-import web
+from flask import Flask, request, redirect
 import json
 
-urls = ('/upload', 'Upload')
+app = Flask(__name__)
 
+#Função que escreve no banco de dados
+# !PROBLEMA, complexidade O(n^2), torna o processo de atualização, no tempo, mais devagar que a máquina
+# .json não possui funções 
 def write_json(new_data, index, filename, i):
     with open(filename,'r+') as file:
         # First we load existing data into a dict.
@@ -14,26 +17,22 @@ def write_json(new_data, index, filename, i):
         # convert back to json.
         json.dump(file_data, file, indent = i)
 
-class Upload:
-    def GET(self):
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        file = request.files['file']
+        raw = file.read()
+        data = json.loads(raw)
+        write_json(data, 'data','data_base.json', 1)
+        return redirect('http://localhost:5000/login', code=302)
+    
+    else:
         return """<html><head></head><body>
 <form method="POST" enctype="multipart/form-data" action="">
-<input type="file" name="myfile" />
-<br/>
-<input type="submit" />
+<h1>HOME</h1>
 </form>
 </body></html>"""
-
-    def POST(self):
-        x = web.input(myfile={})
-        raw = x['myfile'].value
-
-        data = json.loads(raw)
-        for i in range(len(data['data'])):
-            write_json(data['data'][i], 'data','data_base.json', 1)
-        raise web.seeother('/upload')
-
+    
 
 if __name__ == "__main__":
-   app = web.application(urls, globals())
    app.run()
